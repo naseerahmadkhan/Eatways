@@ -14,6 +14,7 @@ const styles = StyleSheet.create({
     container :{
         paddingHorizontal:10, 
         paddingVertical:10,
+        marginVertical:10
         
     },
     typeography:{
@@ -21,7 +22,35 @@ const styles = StyleSheet.create({
             textDecorationLine: 'underline',
            
         }
-    }
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent:"flex-end",
+        alignItems:"flex-end",
+        marginTop: 22,
+      },
+      modalView: {
+        backgroundColor: 'white',
+        flex:0,
+        flexDirection:'row',
+        borderRadius: 10,
+        padding: 53,
+        alignItems:"center",
+        justifyContent:"space-between",
+        shadowColor: '#000',
+        width:'100%',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 0,
+      },
+      
+     
+     
+     
 })
 
 
