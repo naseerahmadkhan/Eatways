@@ -21,14 +21,14 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safearea}>
-    <AppBar 
+    {/* <AppBar 
     title="Eatoos" 
     titleStyle={{fontFamily:'hotpizzaBold'}}
     centerTitle={true} 
     color={styles.colors.primary} 
     style={{paddingTop:20}} 
 
-    />
+    /> */}
     <Appnavigator/>
     </SafeAreaView>
   )
