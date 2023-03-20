@@ -14,11 +14,14 @@ import { TextInput, Button } from "@react-native-material/core";
 import { Avatar } from "@react-native-material/core";
 
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../config/auth/firebase";
+import { auth, db,storage } from "../config/auth/firebase";
 import { collection, addDoc, doc, setDoc  } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
 import Icon from "@expo/vector-icons/MaterialCommunityIcons";
 
 import CameraScreen from "./camerascreen";
+
+import {uriToBlob} from '../utils/uritoblob'
 
 export default function Home({ navigation, route }) {
   const [showCamera, setShowCamera] = useState(false);
@@ -44,6 +47,27 @@ export default function Home({ navigation, route }) {
 
   const takePic = (img) => {
     if (img) {
+      uriToBlob(img)
+      .then((blobReponse) => {
+        console.log('blob resp',blobReponse)
+
+        //--------
+        const filename = `naseerpic.jpg`;
+        const fileRef = ref(storage, filename);
+        uploadBytes(fileRef, blobReponse)
+          .then((uploadResponse) => {
+            console.log('uploaded response',uploadResponse)
+          })
+          .catch((uploadError) => {
+            alert(uploadError.message);
+            setLoading(false);
+          });
+
+        //--------
+      })
+      .catch((blobError)=>{
+        console.log('blob error',blobError)
+      })
       setSignupDetails((prev) => ({ ...prev, pic: img }));
     }
     setShowCamera(false);
