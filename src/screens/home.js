@@ -23,6 +23,11 @@ import CameraScreen from "./camerascreen";
 
 import {uriToBlob} from '../utils/uritoblob'
 
+import { Formik} from "formik";
+import * as Yup from "yup";
+import validator from 'validator';
+
+
 export default function Home({ navigation, route }) {
   const [showCamera, setShowCamera] = useState(false);
 
@@ -31,7 +36,7 @@ export default function Home({ navigation, route }) {
     fname: "",
     lname: "",
     email: "",
-    pass: "",
+    password: "",
     conf: "",
     pic: "",
   });
@@ -44,6 +49,44 @@ export default function Home({ navigation, route }) {
   if (!fontsLoaded) {
     return null;
   }
+
+
+  const SignupSchema = Yup.object().shape({
+    fname: Yup.string()
+      .min(2, 'Too Short!')
+      .max(5, 'Too Long!')
+      .required('Valid first name is required'),
+
+
+      lname: Yup.string()
+      .min(2, 'Too Short!')
+      .max(5, 'Too Long!')
+      .required('Valid last name is required'),  
+
+
+    email: Yup
+      .string()      
+      .email("Invalid email format")
+      .required("Valid email is required")
+      .test("is-valid", (message) => `${message.path} is invalid`, (value) => value ? validator.isEmail(value) : new Yup.ValidationError("Invalid value")),
+
+      password: Yup.string()
+      // .min(8, 'Too Short!')
+      .max(16, 'Too Long!')
+      .required('Valid password required')
+      .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/, 'Use 8 or more characters with a mix of letters, numbers & symbols'),
+      // https://regexr.com/3bfsi
+
+      confirm: Yup.string()
+      .required('Confirm password required')
+      .oneOf([Yup.ref('password'), null], 'Passwords must match'),
+
+      
+
+
+  });
+
+
 
   const takePic = (img) => {
     if (img) {
@@ -74,13 +117,17 @@ export default function Home({ navigation, route }) {
     setModalVisible(!modalVisible);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
 
+  
+
+  const handleUpload = async (data) => {
+    
+    console.log('data',data)
+    
     createUserWithEmailAndPassword(
       auth,
-      signupDetails.email,
-      signupDetails.pass
+      data.email,
+      data.password
     )
       .then(async (userCredential) => {
         // Signed in
@@ -96,13 +143,13 @@ export default function Home({ navigation, route }) {
 
             */
 
-              let data = {
-                first: signupDetails.fname,
-                last: signupDetails.lname,
-                email: signupDetails.email,
+              let formData = {
+                first: data.fname,
+                last: data.lname,
+                email: data.email,
                 uid: user.uid,
               }
-          await setDoc(doc(db, "eatoos",user.uid),data )
+          await setDoc(doc(db, "eatoos",user.uid),formData )
           .then((e)=>{
               console.log('success')
           })
@@ -120,7 +167,18 @@ export default function Home({ navigation, route }) {
       });
   };
 
-  let SignupPage = (
+  const handleSubmitForm = (values) =>{
+
+    let formData = {
+      fname: values.fname,
+      lname: values.lname,
+      email: values.email,
+      password: values.password,
+      pic:"https://profile-url-path"
+    }
+    handleUpload(formData)
+  }
+  const SignupPage = (
     <ScrollView>
       <View style={styles.container}>
         <Text
@@ -150,54 +208,108 @@ export default function Home({ navigation, route }) {
             />
           )}
         </Pressable>
-        <TextInput
-          variant="standard"
-          label="First Name"
-          style={{ marginHorizontal: 10, marginVertical: 8 }}
-          onChangeText={(val) =>
-            setSignupDetails((prev) => ({ ...prev, fname: val }))
-          }
-        />
-        <TextInput
-          variant="standard"
-          label="Last Name"
-          style={{ marginHorizontal: 10, marginVertical: 8 }}
-          onChangeText={(val) =>
-            setSignupDetails((prev) => ({ ...prev, lname: val }))
-          }
-        />
+        {/* -------------------- */}
+       
 
-        <TextInput
-          variant="standard"
-          label="Email"
-          style={{ marginHorizontal: 10, marginVertical: 8 }}
-          onChangeText={(val) =>
-            setSignupDetails((prev) => ({ ...prev, email: val }))
-          }
-        />
-        <TextInput
-          variant="standard"
-          label="Password"
-          secureTextEntry={true}
-          style={{ marginHorizontal: 10, marginVertical: 8 }}
-          onChangeText={(val) =>
-            setSignupDetails((prev) => ({ ...prev, pass: val }))
-          }
-        />
-        <TextInput
-          variant="standard"
-          label="Confirm Password"
-          secureTextEntry={true}
-          style={{ marginHorizontal: 10, marginVertical: 8 }}
-          onChangeText={(val) =>
-            setSignupDetails((prev) => ({ ...prev, conf: val }))
-          }
-        />
-        <Button
-          title="Register"
-          style={{ margin: 16 }}
-          onPress={handleSubmit}
-        />
+<Formik
+        initialValues={{ fname:"",lname:"",email: "",password:"",confirm:""}}
+        validationSchema={SignupSchema}
+      >
+        {({
+          values,
+          handleChange,
+          errors,
+          setFieldTouched,
+          touched,
+          isValidating,
+        }) => (
+          <View>
+
+          <TextInput
+              value={values.fname}
+              onChangeText={handleChange("fname")}
+              onBlur={() => setFieldTouched("fname")}
+              placeholder="First Name"
+              validationSchema={SignupSchema}
+            />
+
+            {touched.fname && errors.fname && (
+              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                {errors.fname}
+              </Text>
+            )}
+
+
+            <TextInput
+              value={values.lname}
+              onChangeText={handleChange("lname")}
+              onBlur={() => setFieldTouched("lname")}
+              placeholder="Last Name"
+              validationSchema={SignupSchema}
+            />
+
+            {touched.lname && errors.lname && (
+              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                {errors.lname}
+              </Text>
+            )}
+
+
+
+
+            <TextInput
+              value={values.email}
+              onChangeText={handleChange("email")}
+              onBlur={() => setFieldTouched("email")}
+              placeholder="E-mail"
+            />
+
+            {touched.email && errors.email && (
+              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                {errors.email}
+              </Text>
+            )}
+
+
+            <TextInput
+              value={values.password}
+              onChangeText={handleChange("password")}
+              onBlur={() => setFieldTouched("password")}
+              placeholder="Password"
+              secureTextEntry={true}
+            />
+
+            {touched.password && errors.password && (
+              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                {errors.password}
+              </Text>
+            )}
+
+
+            <TextInput
+              value={values.confirm}
+              onChangeText={handleChange("confirm")}
+              onBlur={() => setFieldTouched("confirm")}
+              placeholder="Confirm password..."
+              secureTextEntry={true}
+            />
+
+            {touched.confirm && errors.confirm && (
+              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                {errors.confirm}
+              </Text>
+            )}
+
+
+
+
+
+            <Button style={{ margin: 16 }} onPress={()=>handleSubmitForm(values)} title="Submit!" />
+          </View>
+        )}
+      </Formik>
+
+        {/* ----------------- */}
 
         <Modal
           animationType="slide"
