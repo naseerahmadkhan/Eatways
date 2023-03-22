@@ -54,13 +54,13 @@ export default function Home({ navigation, route }) {
   const SignupSchema = Yup.object().shape({
     fname: Yup.string()
       .min(2, 'Too Short!')
-      .max(5, 'Too Long!')
+      .max(8, 'Too Long!')
       .required('Valid first name is required'),
 
 
       lname: Yup.string()
       .min(2, 'Too Short!')
-      .max(5, 'Too Long!')
+      .max(8, 'Too Long!')
       .required('Valid last name is required'),  
 
 
@@ -168,7 +168,6 @@ export default function Home({ navigation, route }) {
   };
 
   const handleSubmitForm = (values) =>{
-
     let formData = {
       fname: values.fname,
       lname: values.lname,
