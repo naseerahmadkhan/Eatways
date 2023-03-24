@@ -31,14 +31,7 @@ export default function Home({ navigation, route }) {
   const [showCamera, setShowCamera] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [signupDetails, setSignupDetails] = useState({
-    fname: "",
-    lname: "",
-    email: "",
-    password: "",
-    conf: "",
-    pic: "",
-  });
+  const [profileImgUrl, setProfileImgUrl] = useState("");
 
   const [fontsLoaded] = useFonts({
     hotpizzaBold: require("../../assets/fonts/hotpizza.ttf"),
@@ -91,14 +84,13 @@ export default function Home({ navigation, route }) {
     try {
       if (img) {
         let blobResponse = await uriToBlob(img);
-        const filename = `naseerpic.jpg`;
+        const filename = `${Date.now()}.jpg`;
         const fileRef = ref(storage, filename);
         let uploadResponse = await uploadBytes(fileRef, blobResponse);
         let storageForimg = getStorage();
         let imageUrl = await getDownloadURL(ref(storageForimg, fileRef));
         console.log("imgurl", imageUrl);
-
-        setSignupDetails((prev) => ({ ...prev, pic: img }));
+        setProfileImgUrl(imageUrl);
       }
     } catch (err) {
       console.log("err>", err);
@@ -108,20 +100,22 @@ export default function Home({ navigation, route }) {
     setModalVisible(!modalVisible);
   };
 
-  const handleUpload = async (data) => {
-    console.log("data", data);
+
+  const handleSubmit = async(values) =>{
+    console.log("data", values);
 
     try{
 
-      let signUpResponse = await createUserWithEmailAndPassword(auth,data.email,data.password);
+      let signUpResponse = await createUserWithEmailAndPassword(auth,values.email,values.password);
       const user = signUpResponse.user;
      
-      let formData = {
-        first: data.fname,
-        last: data.lname,
-        email: data.email,
+      let dataForFirebasDB = {
+        ...values,
         uid: user.uid,
+        profileImageUrl: profileImgUrl,
       };
+      delete dataForFirebasDB.password
+      delete dataForFirebasDB.confirm
   
              /* 
                 ! add data in collection eatoos in database
@@ -130,8 +124,7 @@ export default function Home({ navigation, route }) {
                 ?  await setDoc(doc(db, "collectionName", "customDocID"), {
               */
   
-      let insertInFirebaseDB = await setDoc(doc(db, "eatoos", user.uid),formData);
-      console.log('insertindb',insertInFirebaseDB)
+      let insertInFirebaseDB = await setDoc(doc(db, "eatoos", user.uid),dataForFirebasDB);
 
 
     }catch(err){
@@ -139,18 +132,9 @@ export default function Home({ navigation, route }) {
     }
 
    
-  };
 
-  const handleSubmitForm = (values) => {
-    let formData = {
-      fname: values.fname,
-      lname: values.lname,
-      email: values.email,
-      password: values.password,
-      pic: "https://profile-url-path",
-    };
-    handleUpload(formData);
-  };
+
+  }
   const SignupPage = (
     <ScrollView>
       <View style={styles.container}>
@@ -167,9 +151,9 @@ export default function Home({ navigation, route }) {
 
         {/* <Avatar image={require("../../assets/icon.png")} size={64} /> */}
         <Pressable onPress={() => setModalVisible(true)}>
-          {signupDetails.pic !== "" ? (
+          {profileImgUrl !== "" ? (
             <Avatar
-              image={{ uri: `${signupDetails.pic}` }}
+              image={{ uri: `${profileImgUrl}` }}
               size={64}
               style={{ alignSelf: "center" }}
             />
@@ -185,17 +169,19 @@ export default function Home({ navigation, route }) {
 
         <Formik
           initialValues={{
-            fname: "",
-            lname: "",
-            email: "",
-            password: "",
-            confirm: "",
+            fname: "naseer",
+            lname: "khan",
+            email: "naseer@test.com",
+            password: "#NASeer0987",
+            confirm: "#NASeer0987",
           }}
           validationSchema={SignupSchema}
+          onSubmit={(values)=>handleSubmit(values)}
         >
           {({
             values,
             handleChange,
+            handleSubmit,
             errors,
             setFieldTouched,
             touched,
@@ -273,7 +259,7 @@ export default function Home({ navigation, route }) {
 
               <Button
                 style={{ margin: 16 }}
-                onPress={() => handleSubmitForm(values)}
+                onPress={() => handleSubmit(values)}
                 title="Submit!"
               />
             </View>
