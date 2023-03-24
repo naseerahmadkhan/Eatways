@@ -87,41 +87,23 @@ export default function Home({ navigation, route }) {
       .oneOf([Yup.ref("password"), null], "Passwords must match"),
   });
 
-  const takePic = (img) => {
-    if (img) {
-      uriToBlob(img)
-        .then((blobReponse) => {
-          console.log("blob resp", blobReponse);
+  const takePic = async (img) => {
+    try {
+      if (img) {
+        let blobResponse = await uriToBlob(img);
+        const filename = `naseerpic.jpg`;
+        const fileRef = ref(storage, filename);
+        let uploadResponse = await uploadBytes(fileRef, blobResponse);
+        let storageForimg = getStorage();
+        let imageUrl = await getDownloadURL(ref(storageForimg, fileRef));
+        console.log("imgurl", imageUrl);
 
-          //--------
-          const filename = `naseerpic.jpg`;
-          const fileRef = ref(storage, filename);
-          uploadBytes(fileRef, blobReponse)
-            .then((uploadResponse) => {
-              console.log("uploaded response", uploadResponse);
-              let storageForimg = getStorage();
-              // -------------------------img url
-              getDownloadURL(ref(storageForimg, fileRef))
-                .then((url) => {console.log('url>>>',url)})
-                .catch((error) => {
-                  // Handle any errors
-                  console.log('err for img url',error)
-                });
-
-              // --------------------------
-            })
-            .catch((uploadError) => {
-              alert(uploadError.message);
-              setLoading(false);
-            });
-
-          //--------
-        })
-        .catch((blobError) => {
-          console.log("blob error", blobError);
-        });
-      setSignupDetails((prev) => ({ ...prev, pic: img }));
+        setSignupDetails((prev) => ({ ...prev, pic: img }));
+      }
+    } catch (err) {
+      console.log("err>", err);
     }
+
     setShowCamera(false);
     setModalVisible(!modalVisible);
   };
@@ -129,42 +111,34 @@ export default function Home({ navigation, route }) {
   const handleUpload = async (data) => {
     console.log("data", data);
 
-    createUserWithEmailAndPassword(auth, data.email, data.password)
-      .then(async (userCredential) => {
-        // Signed in
-        const user = userCredential.user;
-        try {
-          /* 
-          ! add data in collection eatoos in database
-          const docRef = await addDoc(collection(db, "eatoos"), {  
+    try{
+
+      let signUpResponse = await createUserWithEmailAndPassword(auth,data.email,data.password);
+      const user = signUpResponse.user;
+     
+      let formData = {
+        first: data.fname,
+        last: data.lname,
+        email: data.email,
+        uid: user.uid,
+      };
+  
+             /* 
+                ! add data in collection eatoos in database
+                !const docRef = await addDoc(collection(db, "eatoos"), {  
+                ?  Add a new document in collection "cities"
+                ?  await setDoc(doc(db, "collectionName", "customDocID"), {
+              */
+  
+      let insertInFirebaseDB = await setDoc(doc(db, "eatoos", user.uid),formData);
+      console.log('insertindb',insertInFirebaseDB)
 
 
-            Add a new document in collection "cities"
-            await setDoc(doc(db, "collectionName", "customDocID"), {
+    }catch(err){
+      console.log('err while uploading',err)
+    }
 
-            */
-
-          let formData = {
-            first: data.fname,
-            last: data.lname,
-            email: data.email,
-            uid: user.uid,
-          };
-          await setDoc(doc(db, "eatoos", user.uid), formData).then((e) => {
-            console.log("success");
-          });
-        } catch (e) {
-          console.error("Error adding document: ", e);
-        }
-
-        // ...
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(error);
-        // ..
-      });
+   
   };
 
   const handleSubmitForm = (values) => {
