@@ -14,19 +14,18 @@ import { TextInput, Button } from "@react-native-material/core";
 import { Avatar } from "@react-native-material/core";
 
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db,storage } from "../config/auth/firebase";
-import { collection, addDoc, doc, setDoc  } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import { auth, db, storage } from "../config/auth/firebase";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
 import Icon from "@expo/vector-icons/MaterialCommunityIcons";
 
 import CameraScreen from "./camerascreen";
 
-import {uriToBlob} from '../utils/uritoblob'
+import { uriToBlob } from "../utils/uritoblob";
 
-import { Formik} from "formik";
+import { Formik } from "formik";
 import * as Yup from "yup";
-import validator from 'validator';
-
+import validator from "validator";
 
 export default function Home({ navigation, route }) {
   const [showCamera, setShowCamera] = useState(false);
@@ -50,85 +49,87 @@ export default function Home({ navigation, route }) {
     return null;
   }
 
-
   const SignupSchema = Yup.object().shape({
     fname: Yup.string()
-      .min(2, 'Too Short!')
-      .max(8, 'Too Long!')
-      .required('Valid first name is required'),
+      .min(2, "Too Short!")
+      .max(8, "Too Long!")
+      .required("Valid first name is required"),
 
+    lname: Yup.string()
+      .min(2, "Too Short!")
+      .max(8, "Too Long!")
+      .required("Valid last name is required"),
 
-      lname: Yup.string()
-      .min(2, 'Too Short!')
-      .max(8, 'Too Long!')
-      .required('Valid last name is required'),  
-
-
-    email: Yup
-      .string()      
+    email: Yup.string()
       .email("Invalid email format")
       .required("Valid email is required")
-      .test("is-valid", (message) => `${message.path} is invalid`, (value) => value ? validator.isEmail(value) : new Yup.ValidationError("Invalid value")),
+      .test(
+        "is-valid",
+        (message) => `${message.path} is invalid`,
+        (value) =>
+          value
+            ? validator.isEmail(value)
+            : new Yup.ValidationError("Invalid value")
+      ),
 
-      password: Yup.string()
+    password: Yup.string()
       // .min(8, 'Too Short!')
-      .max(16, 'Too Long!')
-      .required('Valid password required')
-      .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/, 'Use 8 or more characters with a mix of letters, numbers & symbols'),
-      // https://regexr.com/3bfsi
+      .max(16, "Too Long!")
+      .required("Valid password required")
+      .matches(
+        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/,
+        "Use 8 or more characters with a mix of letters, numbers & symbols"
+      ),
+    // https://regexr.com/3bfsi
 
-      confirm: Yup.string()
-      .required('Confirm password required')
-      .oneOf([Yup.ref('password'), null], 'Passwords must match'),
-
-      
-
-
+    confirm: Yup.string()
+      .required("Confirm password required")
+      .oneOf([Yup.ref("password"), null], "Passwords must match"),
   });
-
-
 
   const takePic = (img) => {
     if (img) {
       uriToBlob(img)
-      .then((blobReponse) => {
-        console.log('blob resp',blobReponse)
+        .then((blobReponse) => {
+          console.log("blob resp", blobReponse);
 
-        //--------
-        const filename = `naseerpic.jpg`;
-        const fileRef = ref(storage, filename);
-        uploadBytes(fileRef, blobReponse)
-          .then((uploadResponse) => {
-            console.log('uploaded response',uploadResponse)
-          })
-          .catch((uploadError) => {
-            alert(uploadError.message);
-            setLoading(false);
-          });
+          //--------
+          const filename = `naseerpic.jpg`;
+          const fileRef = ref(storage, filename);
+          uploadBytes(fileRef, blobReponse)
+            .then((uploadResponse) => {
+              console.log("uploaded response", uploadResponse);
+              let storageForimg = getStorage();
+              // -------------------------img url
+              getDownloadURL(ref(storageForimg, fileRef))
+                .then((url) => {console.log('url>>>',url)})
+                .catch((error) => {
+                  // Handle any errors
+                  console.log('err for img url',error)
+                });
 
-        //--------
-      })
-      .catch((blobError)=>{
-        console.log('blob error',blobError)
-      })
+              // --------------------------
+            })
+            .catch((uploadError) => {
+              alert(uploadError.message);
+              setLoading(false);
+            });
+
+          //--------
+        })
+        .catch((blobError) => {
+          console.log("blob error", blobError);
+        });
       setSignupDetails((prev) => ({ ...prev, pic: img }));
     }
     setShowCamera(false);
     setModalVisible(!modalVisible);
   };
 
-
-  
-
   const handleUpload = async (data) => {
-    
-    console.log('data',data)
-    
-    createUserWithEmailAndPassword(
-      auth,
-      data.email,
-      data.password
-    )
+    console.log("data", data);
+
+    createUserWithEmailAndPassword(auth, data.email, data.password)
       .then(async (userCredential) => {
         // Signed in
         const user = userCredential.user;
@@ -143,16 +144,15 @@ export default function Home({ navigation, route }) {
 
             */
 
-              let formData = {
-                first: data.fname,
-                last: data.lname,
-                email: data.email,
-                uid: user.uid,
-              }
-          await setDoc(doc(db, "eatoos",user.uid),formData )
-          .then((e)=>{
-              console.log('success')
-          })
+          let formData = {
+            first: data.fname,
+            last: data.lname,
+            email: data.email,
+            uid: user.uid,
+          };
+          await setDoc(doc(db, "eatoos", user.uid), formData).then((e) => {
+            console.log("success");
+          });
         } catch (e) {
           console.error("Error adding document: ", e);
         }
@@ -167,16 +167,16 @@ export default function Home({ navigation, route }) {
       });
   };
 
-  const handleSubmitForm = (values) =>{
+  const handleSubmitForm = (values) => {
     let formData = {
       fname: values.fname,
       lname: values.lname,
       email: values.email,
       password: values.password,
-      pic:"https://profile-url-path"
-    }
-    handleUpload(formData)
-  }
+      pic: "https://profile-url-path",
+    };
+    handleUpload(formData);
+  };
   const SignupPage = (
     <ScrollView>
       <View style={styles.container}>
@@ -208,105 +208,103 @@ export default function Home({ navigation, route }) {
           )}
         </Pressable>
         {/* -------------------- */}
-       
 
-<Formik
-        initialValues={{ fname:"",lname:"",email: "",password:"",confirm:""}}
-        validationSchema={SignupSchema}
-      >
-        {({
-          values,
-          handleChange,
-          errors,
-          setFieldTouched,
-          touched,
-          isValidating,
-        }) => (
-          <View>
+        <Formik
+          initialValues={{
+            fname: "",
+            lname: "",
+            email: "",
+            password: "",
+            confirm: "",
+          }}
+          validationSchema={SignupSchema}
+        >
+          {({
+            values,
+            handleChange,
+            errors,
+            setFieldTouched,
+            touched,
+            isValidating,
+          }) => (
+            <View>
+              <TextInput
+                value={values.fname}
+                onChangeText={handleChange("fname")}
+                onBlur={() => setFieldTouched("fname")}
+                placeholder="First Name"
+                validationSchema={SignupSchema}
+              />
 
-          <TextInput
-              value={values.fname}
-              onChangeText={handleChange("fname")}
-              onBlur={() => setFieldTouched("fname")}
-              placeholder="First Name"
-              validationSchema={SignupSchema}
-            />
+              {touched.fname && errors.fname && (
+                <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                  {errors.fname}
+                </Text>
+              )}
 
-            {touched.fname && errors.fname && (
-              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
-                {errors.fname}
-              </Text>
-            )}
+              <TextInput
+                value={values.lname}
+                onChangeText={handleChange("lname")}
+                onBlur={() => setFieldTouched("lname")}
+                placeholder="Last Name"
+                validationSchema={SignupSchema}
+              />
 
+              {touched.lname && errors.lname && (
+                <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                  {errors.lname}
+                </Text>
+              )}
 
-            <TextInput
-              value={values.lname}
-              onChangeText={handleChange("lname")}
-              onBlur={() => setFieldTouched("lname")}
-              placeholder="Last Name"
-              validationSchema={SignupSchema}
-            />
+              <TextInput
+                value={values.email}
+                onChangeText={handleChange("email")}
+                onBlur={() => setFieldTouched("email")}
+                placeholder="E-mail"
+              />
 
-            {touched.lname && errors.lname && (
-              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
-                {errors.lname}
-              </Text>
-            )}
+              {touched.email && errors.email && (
+                <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                  {errors.email}
+                </Text>
+              )}
 
+              <TextInput
+                value={values.password}
+                onChangeText={handleChange("password")}
+                onBlur={() => setFieldTouched("password")}
+                placeholder="Password"
+                secureTextEntry={true}
+              />
 
+              {touched.password && errors.password && (
+                <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                  {errors.password}
+                </Text>
+              )}
 
+              <TextInput
+                value={values.confirm}
+                onChangeText={handleChange("confirm")}
+                onBlur={() => setFieldTouched("confirm")}
+                placeholder="Confirm password..."
+                secureTextEntry={true}
+              />
 
-            <TextInput
-              value={values.email}
-              onChangeText={handleChange("email")}
-              onBlur={() => setFieldTouched("email")}
-              placeholder="E-mail"
-            />
+              {touched.confirm && errors.confirm && (
+                <Text style={{ fontSize: 12, color: "#FF0D10" }}>
+                  {errors.confirm}
+                </Text>
+              )}
 
-            {touched.email && errors.email && (
-              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
-                {errors.email}
-              </Text>
-            )}
-
-
-            <TextInput
-              value={values.password}
-              onChangeText={handleChange("password")}
-              onBlur={() => setFieldTouched("password")}
-              placeholder="Password"
-              secureTextEntry={true}
-            />
-
-            {touched.password && errors.password && (
-              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
-                {errors.password}
-              </Text>
-            )}
-
-
-            <TextInput
-              value={values.confirm}
-              onChangeText={handleChange("confirm")}
-              onBlur={() => setFieldTouched("confirm")}
-              placeholder="Confirm password..."
-              secureTextEntry={true}
-            />
-
-            {touched.confirm && errors.confirm && (
-              <Text style={{ fontSize: 12, color: "#FF0D10" }}>
-                {errors.confirm}
-              </Text>
-            )}
-
-
-
-
-
-            <Button style={{ margin: 16 }} onPress={()=>handleSubmitForm(values)} title="Submit!" />
-          </View>
-        )}
-      </Formik>
+              <Button
+                style={{ margin: 16 }}
+                onPress={() => handleSubmitForm(values)}
+                title="Submit!"
+              />
+            </View>
+          )}
+        </Formik>
 
         {/* ----------------- */}
 
