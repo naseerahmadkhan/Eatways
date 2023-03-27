@@ -266,6 +266,13 @@ export default function SignupScreen({ navigation, route }) {
           )}
         </Formik>
 
+        <Button
+                style={{ margin: 16 }}
+                onPress={() => navigation.replace('LoginScreen')}
+                color="orange"
+                title="Already Registered! Sign In Now"
+              />
+
         {/* ----------------- */}
 
         <Modal
