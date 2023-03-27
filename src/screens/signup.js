@@ -27,7 +27,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import validator from "validator";
 
-export default function Home({ navigation, route }) {
+export default function SignupScreen({ navigation, route }) {
   const [showCamera, setShowCamera] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -135,7 +135,7 @@ export default function Home({ navigation, route }) {
 
 
   }
-  const SignupPage = (
+  const SignupView = (
     <ScrollView>
       <View style={styles.container}>
         <Text
@@ -307,6 +307,6 @@ export default function Home({ navigation, route }) {
       </View>
     );
   } else {
-    return SignupPage;
+    return SignupView;
   }
 }
