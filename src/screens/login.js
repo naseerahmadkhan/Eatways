@@ -42,7 +42,6 @@ export default function LoginScreen({ navigation, route }) {
         console.log('error>>>',err)
         
       }finally{
-        console.log('final')
         setIsLoading(false)
       }
 
