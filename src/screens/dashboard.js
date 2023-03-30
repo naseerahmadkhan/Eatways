@@ -76,6 +76,7 @@ export default function Dashboard({ navigation }) {
       <Text>Get all data from firebase</Text>
       <FlatList data={users} renderItem={myRenderView} />
       <Button title="Get signle item from DB" onPress={getSingleData} />
+      <Button title="Open maps" color="green" onPress={()=>navigation.navigate('MapScreen')}/>
     </View>
   );
 }

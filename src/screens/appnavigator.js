@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import SignupScreen from "./signup";
 import LoginScreen from './login'
 import DashboardScreen from './dashboard'
+import MapScreen from "./map";
 const Stack = createNativeStackNavigator();
 
 export default function Appnavigator() {
@@ -28,6 +29,12 @@ export default function Appnavigator() {
           name="DashboardScreen"
           component={DashboardScreen}
           options={{ title: "DashboardScreen", headerShown: true }}
+        />
+
+        <Stack.Screen
+          name="MapScreen"
+          component={MapScreen}
+          options={{ title: "MapScreen", headerShown: true }}
         />
 
       
