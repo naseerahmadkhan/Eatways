@@ -2,17 +2,20 @@ import { StyleSheet, Text, View } from 'react-native'
 import React, { useEffect,useState } from 'react'
 import MapView from 'react-native-maps';
 import * as Location from 'expo-location';
-import * as TaskManager from "expo-task-manager";
+
 
 
 /* 
-  ? whole article follow here
+  ? two ways to do this , tutorials are as under
   * https://blog.openreplay.com/requesting-location-permission-in-react-native-apps/
+  * https://docs.expo.dev/versions/v48.0.0/sdk/map-view/
+  * https://docs.expo.dev/versions/latest/sdk/location/
 */
 
+// ! Steps
 // npx expo install react-native-maps
 // expo install expo-location 
-// expo install expo-task-manager
+//  "permissions": ["ACCESS_BACKGROUND_LOCATION"] in app.json
 
 // !documentation
 // https://docs.expo.dev/versions/latest/sdk/map-view/
@@ -28,7 +31,6 @@ import * as TaskManager from "expo-task-manager";
 
 export default function Map() {
   
-  const LOCATION_TASK_NAME = "background-location-task";
   const [myLocation,setMyLocation] = useState({
     latitude: 37.78825,
       longitude: -122.4324,
@@ -39,54 +41,31 @@ export default function Map() {
   
 
 
-const getLocation = () =>{
+const getLocation = async() =>{
   
-  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
-    if (error) {
-      console.error(error);
-      return;
-    }
-    if (data) {
-      // Extract location coordinates from data
-      const { locations } = data;
-      const location = locations[0];
-      if (location) {
-        // Do something with captured location coordinates
+  let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
 
-        console.log('location>>',location)
-        setMyLocation({
+      let location = await Location.getCurrentPositionAsync({});
+      console.log(location)
+      setMyLocation(
+        {
           latitude: location.coords.latitude,
-          longitude:location.coords.longitude,
+          longitude: location.coords.longitude,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
-        
-
-        })
-        // setMyLocation(location)
-      }
-    }
-  });
+        }
+      );
 
 }
 
-const requestForegroundAndBackgroundPermission = async () => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status == "granted") {
-   await Location.requestBackgroundPermissionsAsync();
-  
-   await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-      //Location Task Options
-    });
-
-    getLocation();
-    
-    
-  }
-};
  
 
   useEffect(()=>{
-    requestForegroundAndBackgroundPermission()
+    getLocation()
     
   },[])
 
